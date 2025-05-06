@@ -1,10 +1,96 @@
 'use client';
 import { useState, useEffect } from "react";
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // Define a Section type
 interface Section {
   name: string;
   duration: number;
+}
+
+// Sortable item component for sections
+function SortableSectionItem({ id, index, section, is_editing, on_edit, on_delete, on_move_up, on_move_down, on_save, on_cancel, edit_name, edit_duration, set_edit_name, set_edit_duration, is_first, is_last }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 50 : 'auto',
+  };
+  return (
+    <li
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="flex flex-col sm:flex-row sm:items-center justify-between bg-gray-700 p-2 rounded mb-1 cursor-move"
+    >
+      {is_editing ? (
+        <div className="flex flex-col sm:flex-row sm:items-center w-full space-y-2 sm:space-y-0 sm:space-x-2">
+          <input
+            type="text"
+            value={edit_name}
+            onChange={(e) => set_edit_name(e.target.value)}
+            className="p-1 rounded bg-gray-600 text-white flex-1"
+          />
+          <input
+            type="number"
+            value={edit_duration}
+            onChange={(e) => set_edit_duration(e.target.value)}
+            className="p-1 rounded bg-gray-600 text-white w-20"
+          />
+          <button
+            onClick={on_save}
+            className="p-1 bg-green-600 rounded hover:bg-green-700 text-xs"
+          >
+            Save
+          </button>
+          <button
+            onClick={on_cancel}
+            className="p-1 bg-gray-500 rounded hover:bg-gray-600 text-xs"
+          >
+            Cancel
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-col sm:flex-row sm:items-center w-full justify-between">
+          <span className="flex-1">
+            {section.name} ({section.duration} min)
+          </span>
+          <div className="flex space-x-1 mt-2 sm:mt-0">
+            <button
+              onClick={on_edit}
+              className="p-1 bg-yellow-600 rounded hover:bg-yellow-700 text-xs"
+            >
+              Edit
+            </button>
+            <button
+              onClick={on_delete}
+              className="p-1 bg-red-600 rounded hover:bg-red-700 text-xs"
+            >
+              Delete
+            </button>
+            <button
+              onClick={on_move_up}
+              className="p-1 bg-blue-500 rounded hover:bg-blue-600 text-xs"
+              disabled={is_first}
+            >
+              ↑
+            </button>
+            <button
+              onClick={on_move_down}
+              className="p-1 bg-blue-500 rounded hover:bg-blue-600 text-xs"
+              disabled={is_last}
+            >
+              ↓
+            </button>
+          </div>
+        </div>
+      )}
+    </li>
+  );
 }
 
 export default function StreamTimer() {
@@ -17,6 +103,14 @@ export default function StreamTimer() {
   const [edit_section_index, set_edit_section_index] = useState<number | null>(null);
   const [edit_section_name, set_edit_section_name] = useState<string>("");
   const [edit_section_duration, set_edit_section_duration] = useState<string>("");
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    })
+  );
 
   // Load sections from localStorage on mount
   useEffect(() => {
@@ -161,77 +255,47 @@ export default function StreamTimer() {
             Add
           </button>
         </div>
-        <ul className="space-y-2">
-          {sections.map((section, index) => (
-            <li
-              key={index}
-              className="flex flex-col sm:flex-row sm:items-center justify-between bg-gray-700 p-2 rounded"
-            >
-              {edit_section_index === index ? (
-                <div className="flex flex-col sm:flex-row sm:items-center w-full space-y-2 sm:space-y-0 sm:space-x-2">
-                  <input
-                    type="text"
-                    value={edit_section_name}
-                    onChange={(e) => set_edit_section_name(e.target.value)}
-                    className="p-1 rounded bg-gray-600 text-white flex-1"
-                  />
-                  <input
-                    type="number"
-                    value={edit_section_duration}
-                    onChange={(e) => set_edit_section_duration(e.target.value)}
-                    className="p-1 rounded bg-gray-600 text-white w-20"
-                  />
-                  <button
-                    onClick={() => save_edit_section(index)}
-                    className="p-1 bg-green-600 rounded hover:bg-green-700 text-xs"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={cancel_edit_section}
-                    className="p-1 bg-gray-500 rounded hover:bg-gray-600 text-xs"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              ) : (
-                <div className="flex flex-col sm:flex-row sm:items-center w-full justify-between">
-                  <span className="flex-1">
-                    {section.name} ({section.duration} min)
-                  </span>
-                  <div className="flex space-x-1 mt-2 sm:mt-0">
-                    <button
-                      onClick={() => start_edit_section(index)}
-                      className="p-1 bg-yellow-600 rounded hover:bg-yellow-700 text-xs"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => setSections(sections.filter((_, i) => i !== index))}
-                      className="p-1 bg-red-600 rounded hover:bg-red-700 text-xs"
-                    >
-                      Delete
-                    </button>
-                    <button
-                      onClick={() => move_section(index, 'up')}
-                      className="p-1 bg-blue-500 rounded hover:bg-blue-600 text-xs"
-                      disabled={index === 0}
-                    >
-                      ↑
-                    </button>
-                    <button
-                      onClick={() => move_section(index, 'down')}
-                      className="p-1 bg-blue-500 rounded hover:bg-blue-600 text-xs"
-                      disabled={index === sections.length - 1}
-                    >
-                      ↓
-                    </button>
-                  </div>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={(event) => {
+            const { active, over } = event;
+            if (active.id !== over?.id) {
+              const oldIndex = sections.findIndex((_, i) => i.toString() === active.id);
+              const newIndex = sections.findIndex((_, i) => i.toString() === over?.id);
+              setSections((sections) => arrayMove(sections, oldIndex, newIndex));
+            }
+          }}
+        >
+          <SortableContext
+            items={sections.map((_, i) => i.toString())}
+            strategy={verticalListSortingStrategy}
+          >
+            <ul className="space-y-2">
+              {sections.map((section, index) => (
+                <SortableSectionItem
+                  key={index}
+                  id={index.toString()}
+                  index={index}
+                  section={section}
+                  is_editing={edit_section_index === index}
+                  on_edit={() => start_edit_section(index)}
+                  on_delete={() => setSections(sections.filter((_, i) => i !== index))}
+                  on_move_up={() => move_section(index, 'up')}
+                  on_move_down={() => move_section(index, 'down')}
+                  on_save={() => save_edit_section(index)}
+                  on_cancel={cancel_edit_section}
+                  edit_name={edit_section_name}
+                  edit_duration={edit_section_duration}
+                  set_edit_name={set_edit_section_name}
+                  set_edit_duration={set_edit_section_duration}
+                  is_first={index === 0}
+                  is_last={index === sections.length - 1}
+                />
+              ))}
+            </ul>
+          </SortableContext>
+        </DndContext>
       </div>
 
       {/* Timer Display */}
