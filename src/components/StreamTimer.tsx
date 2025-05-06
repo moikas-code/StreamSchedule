@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -201,7 +201,7 @@ export default function StreamTimer() {
   };
 
   // Start timer
-  const startTimer = () => {
+  const startTimer = useCallback(() => {
     if (sections.length > 0 && currentSection === null) {
       setCurrentSection(0);
       setTime(0);
@@ -209,17 +209,17 @@ export default function StreamTimer() {
     } else if (currentSection !== null) {
       setIsRunning(true);
     }
-  };
+  }, [sections, currentSection]);
 
   // Pause timer
-  const pauseTimer = () => setIsRunning(false);
+  const pauseTimer = useCallback(() => setIsRunning(false), []);
 
   // Reset timer
-  const resetTimer = () => {
+  const resetTimer = useCallback(() => {
     setIsRunning(false);
     setCurrentSection(null);
     setTime(0);
-  };
+  }, []);
 
   // Format time as MM:SS
   const formatTime = (seconds: number) => {
@@ -295,7 +295,7 @@ export default function StreamTimer() {
       const base_url = typeof window !== 'undefined' ? window.location.origin : '';
       set_share_link(`${base_url}/display?sections=${encoded_sections}`);
       set_copy_success(false);
-    } catch (err) {
+    } catch {
       set_share_link("");
     }
   };
@@ -309,7 +309,7 @@ export default function StreamTimer() {
         set_show_toast(true);
         setTimeout(() => set_show_toast(false), 2000);
         setTimeout(() => set_copy_success(false), 1500);
-      } catch (err) {
+      } catch {
         set_copy_success(false);
       }
     }
