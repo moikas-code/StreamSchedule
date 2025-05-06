@@ -1,4 +1,5 @@
 "use client";
+import { Suspense } from "react";
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { jwtDecode } from 'jwt-decode';
@@ -21,7 +22,7 @@ function parse_sections_from_token(token) {
   }
 }
 
-export default function DisplayPage() {
+function DisplayPageContent() {
   const search_params = useSearchParams();
   const token_param = search_params.get("token");
   const [sections, set_sections] = useState([]);
@@ -125,5 +126,13 @@ export default function DisplayPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function DisplayPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <DisplayPageContent />
+    </Suspense>
   );
 } 
