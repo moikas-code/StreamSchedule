@@ -3,12 +3,6 @@ import { Suspense, useEffect, useState, useRef, useMemo, useCallback } from "rea
 import { useSearchParams } from "next/navigation";
 import { verify_jwt } from "@/lib/jwt";
 
-function parse_sections_from_token(token) {
-  const secret = process.env.NEXT_PUBLIC_JWT_SECRET;
-  if (!token || !secret) return [];
-  // verify_jwt is async, so we must handle it in a useEffect
-  return { token, secret };
-}
 
 function DisplayPageContent() {
   const search_params = useSearchParams();

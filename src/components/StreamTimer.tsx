@@ -4,7 +4,6 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from 
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Dispatch, SetStateAction } from 'react';
-import jwt_encode from "jwt-encode";
 
 // Define a Section type
 interface Section {
