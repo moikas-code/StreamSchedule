@@ -32,28 +32,26 @@ export default function StreamTimer() {
 
   // Timer logic
   useEffect(() => {
-    let timer: NodeJS.Timeout | undefined;
-    if (isRunning && currentSection !== null) {
-      timer = setInterval(() => {
-        setTime((prev: number) => {
-          const section = sections[currentSection];
-          if (prev >= section.duration * 60) {
-            // Move to next section or stop
-            if (currentSection < sections.length - 1) {
-              setCurrentSection(currentSection + 1);
-              return 0;
-            } else {
-              setIsRunning(false);
-              return prev;
-            }
+    if (!isRunning || currentSection === null) return;
+
+    const timer = setInterval(() => {
+      setTime((prevTime) => {
+        const section = sections[currentSection];
+        if (prevTime + 1 >= section.duration * 60) {
+          // Section finished
+          if (currentSection < sections.length - 1) {
+            setCurrentSection((prevSection) => prevSection !== null ? prevSection + 1 : 0);
+            return 0;
+          } else {
+            setIsRunning(false);
+            return section.duration * 60; // Clamp to max
           }
-          return prev + 1;
-        });
-      }, 1000);
-    }
-    return () => {
-      if (timer) clearInterval(timer);
-    };
+        }
+        return prevTime + 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
   }, [isRunning, currentSection, sections]);
 
   // Add new section
