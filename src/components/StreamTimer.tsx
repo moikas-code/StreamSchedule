@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import type { Dispatch, SetStateAction } from 'react';
 
 // Define a Section type
 interface Section {
@@ -11,7 +12,26 @@ interface Section {
 }
 
 // Sortable item component for sections
-function SortableSectionItem({ id, index, section, is_editing, on_edit, on_delete, on_move_up, on_move_down, on_save, on_cancel, edit_name, edit_duration, set_edit_name, set_edit_duration, is_first, is_last }) {
+interface SortableSectionItemProps {
+  id: string;
+  index: number;
+  section: Section;
+  is_editing: boolean;
+  on_edit: () => void;
+  on_delete: () => void;
+  on_move_up: () => void;
+  on_move_down: () => void;
+  on_save: () => void;
+  on_cancel: () => void;
+  edit_name: string;
+  edit_duration: string;
+  set_edit_name: Dispatch<SetStateAction<string>>;
+  set_edit_duration: Dispatch<SetStateAction<string>>;
+  is_first: boolean;
+  is_last: boolean;
+}
+
+function SortableSectionItem({ id, index, section, is_editing, on_edit, on_delete, on_move_up, on_move_down, on_save, on_cancel, edit_name, edit_duration, set_edit_name, set_edit_duration, is_first, is_last }: SortableSectionItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -23,10 +43,26 @@ function SortableSectionItem({ id, index, section, is_editing, on_edit, on_delet
     <li
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
-      className="flex flex-col sm:flex-row sm:items-center justify-between bg-gray-700 p-2 rounded mb-1 cursor-move"
+      className="flex flex-col sm:flex-row sm:items-center justify-between bg-gray-700 p-2 rounded mb-1"
     >
+      <div className="flex items-center mb-2 sm:mb-0 sm:mr-2">
+        {/* Drag handle icon */}
+        <button
+          type="button"
+          className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-gray-600 focus:outline-none"
+          {...attributes}
+          {...listeners}
+          tabIndex={0}
+          aria-label="Drag to reorder"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 20 20" stroke="currentColor">
+            <circle cx="7" cy="7" r="1.5" />
+            <circle cx="7" cy="13" r="1.5" />
+            <circle cx="13" cy="7" r="1.5" />
+            <circle cx="13" cy="13" r="1.5" />
+          </svg>
+        </button>
+      </div>
       {is_editing ? (
         <div className="flex flex-col sm:flex-row sm:items-center w-full space-y-2 sm:space-y-0 sm:space-x-2">
           <input
@@ -228,6 +264,27 @@ export default function StreamTimer() {
     setSections(updated_sections);
   };
 
+  // Keyboard shortcuts: S=start, P=pause, R=reset
+  useEffect(() => {
+    const handle_keydown = (event: KeyboardEvent) => {
+      if (
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+      if (event.key === 's' || event.key === 'S') {
+        startTimer();
+      } else if (event.key === 'p' || event.key === 'P') {
+        pauseTimer();
+      } else if (event.key === 'r' || event.key === 'R') {
+        resetTimer();
+      }
+    };
+    window.addEventListener('keydown', handle_keydown);
+    return () => window.removeEventListener('keydown', handle_keydown);
+  }, [startTimer, pauseTimer, resetTimer, isRunning, sections, currentSection, time]);
+
   return (
     <div className="p-6 max-w-2xl mx-auto bg-gray-800 text-white rounded-lg shadow-lg">
       {/* Section Management */}
@@ -323,27 +380,43 @@ export default function StreamTimer() {
       </div>
 
       {/* Controls */}
-      <div className="flex space-x-2">
-        <button
-          onClick={startTimer}
-          className="p-2 bg-green-600 rounded hover:bg-green-700"
-          disabled={isRunning || sections.length === 0}
-        >
-          Start
-        </button>
-        <button
-          onClick={pauseTimer}
-          className="p-2 bg-yellow-600 rounded hover:bg-yellow-700"
-          disabled={!isRunning}
-        >
-          Pause
-        </button>
-        <button
-          onClick={resetTimer}
-          className="p-2 bg-red-600 rounded hover:bg-red-700"
-        >
-          Reset
-        </button>
+      <div className="flex flex-col space-y-2">
+        <div className="flex space-x-2 mb-2">
+          <span className="text-xs text-gray-400 flex items-center">
+            <kbd className="bg-gray-700 px-2 py-1 rounded font-mono text-xs mr-1 border border-gray-600">S</kbd>
+            Start
+          </span>
+          <span className="text-xs text-gray-400 flex items-center">
+            <kbd className="bg-gray-700 px-2 py-1 rounded font-mono text-xs mr-1 border border-gray-600">P</kbd>
+            Pause
+          </span>
+          <span className="text-xs text-gray-400 flex items-center">
+            <kbd className="bg-gray-700 px-2 py-1 rounded font-mono text-xs mr-1 border border-gray-600">R</kbd>
+            Reset
+          </span>
+        </div>
+        <div className="flex space-x-2">
+          <button
+            onClick={startTimer}
+            className="p-2 bg-green-600 rounded hover:bg-green-700"
+            disabled={isRunning || sections.length === 0}
+          >
+            Start
+          </button>
+          <button
+            onClick={pauseTimer}
+            className="p-2 bg-yellow-600 rounded hover:bg-yellow-700"
+            disabled={!isRunning}
+          >
+            Pause
+          </button>
+          <button
+            onClick={resetTimer}
+            className="p-2 bg-red-600 rounded hover:bg-red-700"
+          >
+            Reset
+          </button>
+        </div>
       </div>
     </div>
   );
