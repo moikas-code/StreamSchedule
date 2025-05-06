@@ -29,6 +29,15 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to use Stream Scheduler.
 
+## Example .env
+
+Create a `.env` file in the root of your project with the following content:
+
+```
+# Secret key for JWT signing (required for sharing schedules)
+JWT_SECRET=your_super_secret_key_here
+```
+
 ## Usage
 
 1. Add sections to your schedule by entering a name and duration, then clicking "Add".
@@ -49,4 +58,4 @@ Contributions are welcome! Please open issues or submit pull requests to help im
 
 ## License
 
-This project is licensed under the MIT License.
+This project is open source and licensed under the MIT License. See the LICENSE file for details.
