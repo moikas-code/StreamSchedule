@@ -43,81 +43,81 @@ function SortableSectionItem({ id, index, section, is_editing, on_edit, on_delet
     <li
       ref={setNodeRef}
       style={style}
-      className="flex flex-col sm:flex-row sm:items-center justify-between bg-gray-700 p-2 rounded mb-1"
+      className="card card-bordered shadow-xl mb-2 bg-base-200 text-base-content"
     >
-      <div className="flex items-center mb-2 sm:mb-0 sm:mr-2">
-        {/* Drag handle icon */}
-        <button
-          type="button"
-          className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-gray-600 focus:outline-none"
-          {...attributes}
-          {...listeners}
-          tabIndex={0}
-          aria-label="Drag to reorder"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 20 20" stroke="currentColor">
-            <circle cx="7" cy="7" r="1.5" />
-            <circle cx="7" cy="13" r="1.5" />
-            <circle cx="13" cy="7" r="1.5" />
-            <circle cx="13" cy="13" r="1.5" />
-          </svg>
-        </button>
-      </div>
       {is_editing ? (
         <div className="flex flex-col sm:flex-row sm:items-center w-full space-y-2 sm:space-y-0 sm:space-x-2">
           <input
             type="text"
             value={edit_name}
             onChange={(e) => set_edit_name(e.target.value)}
-            className="p-1 rounded bg-gray-600 text-white flex-1"
+            className="input input-bordered input-sm w-full"
           />
           <input
             type="number"
             value={edit_duration}
             onChange={(e) => set_edit_duration(e.target.value)}
-            className="p-1 rounded bg-gray-600 text-white w-20"
+            className="input input-bordered input-sm w-20"
           />
           <button
             onClick={on_save}
-            className="p-1 bg-green-600 rounded hover:bg-green-700 text-xs"
+            className="btn btn-success btn-xs"
           >
             Save
           </button>
           <button
             onClick={on_cancel}
-            className="p-1 bg-gray-500 rounded hover:bg-gray-600 text-xs"
+            className="btn btn-ghost btn-xs"
           >
             Cancel
           </button>
         </div>
       ) : (
-        <div className="flex flex-col sm:flex-row sm:items-center w-full justify-between">
-          <span className="flex-1">
-            {section.name} ({section.duration} min)
-          </span>
+        <div className="flex flex-row items-center w-full justify-between">
+          <div className="flex flex-row items-center flex-1">
+            {/* Drag handle icon */}
+            <button
+              type="button"
+              className="btn btn-ghost btn-xs cursor-grab active:cursor-grabbing mr-2"
+              {...attributes}
+              {...listeners}
+              tabIndex={0}
+              aria-label="Drag to reorder"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 20 20" stroke="currentColor">
+                <circle cx="7" cy="7" r="1.5" />
+                <circle cx="7" cy="13" r="1.5" />
+                <circle cx="13" cy="7" r="1.5" />
+                <circle cx="13" cy="13" r="1.5" />
+              </svg>
+            </button>
+            <span className="flex-1">
+              {section.name} ({section.duration} min)
+            </span>
+          </div>
           <div className="flex space-x-1 mt-2 sm:mt-0">
             <button
               onClick={on_edit}
-              className="p-1 bg-yellow-600 rounded hover:bg-yellow-700 text-xs"
+              className="btn btn-warning btn-xs"
             >
               Edit
             </button>
             <button
               onClick={on_delete}
-              className="p-1 bg-red-600 rounded hover:bg-red-700 text-xs"
+              className="btn btn-error btn-xs"
             >
               Delete
             </button>
             <button
               onClick={on_move_up}
-              className="p-1 bg-blue-500 rounded hover:bg-blue-600 text-xs"
+              className="btn btn-info btn-xs"
               disabled={is_first}
             >
               ↑
             </button>
             <button
               onClick={on_move_down}
-              className="p-1 bg-blue-500 rounded hover:bg-blue-600 text-xs"
+              className="btn btn-info btn-xs"
               disabled={is_last}
             >
               ↓
@@ -139,6 +139,9 @@ export default function StreamTimer() {
   const [edit_section_index, set_edit_section_index] = useState<number | null>(null);
   const [edit_section_name, set_edit_section_name] = useState<string>("");
   const [edit_section_duration, set_edit_section_duration] = useState<string>("");
+  const [share_link, set_share_link] = useState<string>("");
+  const [copy_success, set_copy_success] = useState<boolean>(false);
+  const [show_toast, set_show_toast] = useState<boolean>(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -285,137 +288,190 @@ export default function StreamTimer() {
     return () => window.removeEventListener('keydown', handle_keydown);
   }, [startTimer, pauseTimer, resetTimer, isRunning, sections, currentSection, time]);
 
+  // Generate shareable link
+  const generate_share_link = () => {
+    try {
+      const encoded_sections = encodeURIComponent(JSON.stringify(sections));
+      const base_url = typeof window !== 'undefined' ? window.location.origin : '';
+      set_share_link(`${base_url}/display?sections=${encoded_sections}`);
+      set_copy_success(false);
+    } catch (err) {
+      set_share_link("");
+    }
+  };
+
+  // Copy link to clipboard
+  const copy_to_clipboard = async () => {
+    if (share_link) {
+      try {
+        await navigator.clipboard.writeText(share_link);
+        set_copy_success(true);
+        set_show_toast(true);
+        setTimeout(() => set_show_toast(false), 2000);
+        setTimeout(() => set_copy_success(false), 1500);
+      } catch (err) {
+        set_copy_success(false);
+      }
+    }
+  };
+
   return (
-    <div className="p-6 max-w-2xl mx-auto bg-gray-800 text-white rounded-lg shadow-lg">
-      {/* Section Management */}
-      <div className="mb-6">
-        <h2 className="text-xl font-bold mb-2">Manage Sections</h2>
-        <div className="flex space-x-2 mb-4">
-          <input
-            type="text"
-            placeholder="Section Name"
-            value={newSectionName}
-            onChange={(e) => setNewSectionName(e.target.value)}
-            className="p-2 rounded bg-gray-700 text-white"
-          />
-          <input
-            type="number"
-            placeholder="Duration (min)"
-            value={newSectionDuration}
-            onChange={(e) => setNewSectionDuration(e.target.value)}
-            className="p-2 rounded bg-gray-700 text-white w-24"
-          />
-          <button
-            onClick={addSection}
-            className="p-2 bg-blue-600 rounded hover:bg-blue-700"
-          >
-            Add
-          </button>
-        </div>
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={(event) => {
-            const { active, over } = event;
-            if (active.id !== over?.id) {
-              const oldIndex = sections.findIndex((_, i) => i.toString() === active.id);
-              const newIndex = sections.findIndex((_, i) => i.toString() === over?.id);
-              setSections((sections) => arrayMove(sections, oldIndex, newIndex));
-            }
-          }}
-        >
-          <SortableContext
-            items={sections.map((_, i) => i.toString())}
-            strategy={verticalListSortingStrategy}
-          >
-            <ul className="space-y-2">
-              {sections.map((section, index) => (
-                <SortableSectionItem
-                  key={index}
-                  id={index.toString()}
-                  index={index}
-                  section={section}
-                  is_editing={edit_section_index === index}
-                  on_edit={() => start_edit_section(index)}
-                  on_delete={() => setSections(sections.filter((_, i) => i !== index))}
-                  on_move_up={() => move_section(index, 'up')}
-                  on_move_down={() => move_section(index, 'down')}
-                  on_save={() => save_edit_section(index)}
-                  on_cancel={cancel_edit_section}
-                  edit_name={edit_section_name}
-                  edit_duration={edit_section_duration}
-                  set_edit_name={set_edit_section_name}
-                  set_edit_duration={set_edit_section_duration}
-                  is_first={index === 0}
-                  is_last={index === sections.length - 1}
-                />
-              ))}
-            </ul>
-          </SortableContext>
-        </DndContext>
-      </div>
-
-      {/* Timer Display */}
-      <div className="mb-6">
-        <h2 className="text-xl font-bold mb-2">Live Timer</h2>
-        <div className="text-4xl font-mono mb-4">
-          {currentSection !== null
-            ? `${sections[currentSection].name}: ${formatTime(
-                time
-              )} / ${formatTime(sections[currentSection].duration * 60)}`
-            : "No Section Selected"}
-        </div>
-        <div className="relative h-4 bg-gray-600 rounded">
-          {currentSection !== null && (
-            <div
-              className="absolute h-4 bg-blue-600 rounded"
-              style={{
-                width: `${
-                  (time / (sections[currentSection].duration * 60)) * 100
-                }%`,
-              }}
+    <div className="card card-bordered max-w-2xl mx-auto bg-base-200 text-base-content rounded-lg shadow-xl">
+      <div className="card-body p-6 text-base-content">
+        {/* Section Management */}
+        <div className="mb-6">
+          <h2 className="card-title mb-2 text-base-content">Manage Sections</h2>
+          <div className="flex space-x-2 mb-4">
+            <input
+              type="text"
+              placeholder="Section Name"
+              value={newSectionName}
+              onChange={(e) => setNewSectionName(e.target.value)}
+              className="input input-bordered input-sm w-full"
             />
-          )}
+            <input
+              type="number"
+              placeholder="Duration (min)"
+              value={newSectionDuration}
+              onChange={(e) => setNewSectionDuration(e.target.value)}
+              className="input input-bordered input-sm w-24"
+            />
+            <button
+              onClick={addSection}
+              className="btn btn-primary btn-sm"
+            >
+              Add
+            </button>
+          </div>
+          {/* Shareable Link Feature */}
+          {/* Toast for copy feedback */}
+          <div className={`fixed top-6 left-1/2 transform -translate-x-1/2 z-50 transition-opacity duration-500 ${show_toast ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+            <div className="bg-purple-700 text-white px-6 py-3 rounded-lg shadow-lg font-bold text-lg animate-fade-in-out">
+              Link Copied!
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 mb-4">
+            <button
+              onClick={generate_share_link}
+              className="btn btn-sm bg-purple-600 hover:bg-purple-700 text-white border-none"
+              type="button"
+            >
+              Generate Share Link
+            </button>
+            <input
+              type="text"
+              readOnly
+              value={share_link}
+              className="input input-sm bg-gray-100 text-gray-700 w-full sm:w-auto flex-1"
+              placeholder="Shareable link will appear here"
+            />
+            <button
+              onClick={copy_to_clipboard}
+              className="btn btn-sm bg-gray-400 hover:bg-gray-500 text-white border-none"
+              type="button"
+              disabled={!share_link}
+            >
+              {copy_success ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={(event) => {
+              const { active, over } = event;
+              if (active.id !== over?.id) {
+                const oldIndex = sections.findIndex((_, i) => i.toString() === active.id);
+                const newIndex = sections.findIndex((_, i) => i.toString() === over?.id);
+                setSections((sections) => arrayMove(sections, oldIndex, newIndex));
+              }
+            }}
+          >
+            <SortableContext
+              items={sections.map((_, i) => i.toString())}
+              strategy={verticalListSortingStrategy}
+            >
+              <ul className="space-y-2">
+                {sections.map((section, index) => (
+                  <SortableSectionItem
+                    key={index}
+                    id={index.toString()}
+                    index={index}
+                    section={section}
+                    is_editing={edit_section_index === index}
+                    on_edit={() => start_edit_section(index)}
+                    on_delete={() => setSections(sections.filter((_, i) => i !== index))}
+                    on_move_up={() => move_section(index, 'up')}
+                    on_move_down={() => move_section(index, 'down')}
+                    on_save={() => save_edit_section(index)}
+                    on_cancel={cancel_edit_section}
+                    edit_name={edit_section_name}
+                    edit_duration={edit_section_duration}
+                    set_edit_name={set_edit_section_name}
+                    set_edit_duration={set_edit_section_duration}
+                    is_first={index === 0}
+                    is_last={index === sections.length - 1}
+                  />
+                ))}
+              </ul>
+            </SortableContext>
+          </DndContext>
         </div>
-      </div>
 
-      {/* Controls */}
-      <div className="flex flex-col space-y-2">
-        <div className="flex space-x-2 mb-2">
-          <span className="text-xs text-gray-400 flex items-center">
-            <kbd className="bg-gray-700 px-2 py-1 rounded font-mono text-xs mr-1 border border-gray-600">S</kbd>
-            Start
-          </span>
-          <span className="text-xs text-gray-400 flex items-center">
-            <kbd className="bg-gray-700 px-2 py-1 rounded font-mono text-xs mr-1 border border-gray-600">P</kbd>
-            Pause
-          </span>
-          <span className="text-xs text-gray-400 flex items-center">
-            <kbd className="bg-gray-700 px-2 py-1 rounded font-mono text-xs mr-1 border border-gray-600">R</kbd>
-            Reset
-          </span>
+        {/* Timer Display */}
+        <div className="mb-6">
+          <h2 className="card-title mb-2 text-base-content">Live Timer</h2>
+          <div className="text-4xl font-mono mb-4 text-base-content">
+            {currentSection !== null
+              ? `${sections[currentSection].name}: ${formatTime(
+                  time
+                )} / ${formatTime(sections[currentSection].duration * 60)}`
+              : "No Section Selected"}
+          </div>
+          <progress
+            className="progress progress-primary w-full h-4"
+            value={currentSection !== null ? time : 0}
+            max={currentSection !== null ? sections[currentSection].duration * 60 : 1}
+          />
         </div>
-        <div className="flex space-x-2">
-          <button
-            onClick={startTimer}
-            className="p-2 bg-green-600 rounded hover:bg-green-700"
-            disabled={isRunning || sections.length === 0}
-          >
-            Start
-          </button>
-          <button
-            onClick={pauseTimer}
-            className="p-2 bg-yellow-600 rounded hover:bg-yellow-700"
-            disabled={!isRunning}
-          >
-            Pause
-          </button>
-          <button
-            onClick={resetTimer}
-            className="p-2 bg-red-600 rounded hover:bg-red-700"
-          >
-            Reset
-          </button>
+
+        {/* Controls */}
+        <div className="flex flex-col space-y-2">
+          <div className="flex space-x-2 mb-2">
+            <span className="text-xs text-base-content flex items-center">
+              <kbd className="kbd kbd-xs mr-1">S</kbd>
+              Start
+            </span>
+            <span className="text-xs text-base-content flex items-center">
+              <kbd className="kbd kbd-xs mr-1">P</kbd>
+              Pause
+            </span>
+            <span className="text-xs text-base-content flex items-center">
+              <kbd className="kbd kbd-xs mr-1">R</kbd>
+              Reset
+            </span>
+          </div>
+          <div className="flex space-x-2">
+            <button
+              onClick={startTimer}
+              className="btn btn-success btn-sm"
+              disabled={isRunning || sections.length === 0}
+            >
+              Start
+            </button>
+            <button
+              onClick={pauseTimer}
+              className="btn btn-warning btn-sm"
+              disabled={!isRunning}
+            >
+              Pause
+            </button>
+            <button
+              onClick={resetTimer}
+              className="btn btn-error btn-sm"
+            >
+              Reset
+            </button>
+          </div>
         </div>
       </div>
     </div>
