@@ -128,7 +128,7 @@ function SortableSectionItem({ id, section, is_editing, on_edit, on_delete, on_m
   );
 }
 
-export default function StreamScheduler() {
+export default function StreamSchedule() {
   const [sections, setSections] = useState<Section[]>([]);
   const [currentSection, setCurrentSection] = useState<number | null>(null);
   const [time, setTime] = useState<number>(0);

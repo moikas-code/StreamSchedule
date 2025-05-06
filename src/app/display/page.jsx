@@ -76,7 +76,7 @@ function DisplayPageContent() {
   return (
     <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-2xl bg-gray-800/70 rounded-2xl shadow-2xl p-8 border-4 border-purple-700">
-        <h1 className="text-4xl font-extrabold text-purple-400 mb-8 text-center tracking-widest drop-shadow-lg">STREAM TIMER</h1>
+        <h1 className="text-4xl font-extrabold text-purple-400 mb-8 text-center tracking-widest drop-shadow-lg">STREAM SCHEDULE</h1>
         <div className="mb-10">
           <div className="text-2xl font-bold text-white mb-2 text-center">Current Section</div>
           <div className="flex flex-col items-center justify-center">

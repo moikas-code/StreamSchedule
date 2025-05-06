@@ -1,4 +1,17 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Stream Scheduler
+
+Stream Scheduler is a web application for streamers and event hosts to create, manage, and share detailed streaming schedules. Each schedule consists of multiple sections, each with a custom name and duration, and a built-in timer to help you stay on track during your stream or event.
+
+## Features
+
+- Create and manage a list of schedule sections, each with a name and duration (in minutes)
+- Drag-and-drop reordering of sections
+- Edit and delete sections easily
+- Start, pause, and reset a timer for your schedule
+- Keyboard shortcuts for timer control (S: Start, P: Pause, R: Reset)
+- Generate a secure, shareable link for your schedule
+- View schedules in a dedicated display mode for sharing with your audience
+- All data is stored locally in your browser for privacy
 
 ## Getting Started
 
@@ -14,23 +27,26 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser to use Stream Scheduler.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Usage
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Add sections to your schedule by entering a name and duration, then clicking "Add".
+2. Reorder sections using drag-and-drop, or edit/delete as needed.
+3. Start the timer to begin your stream or event. The timer will automatically advance to the next section when the current one ends.
+4. Generate a shareable link to your schedule for your audience or collaborators. The link is secured with a token and does not expose your secret data.
+5. Open the shareable link in a new tab or window to view the schedule in display mode.
 
-## Learn More
+## Security & Sharing
 
-To learn more about Next.js, take a look at the following resources:
+- Shareable links are generated using a secure token (JWT) that encodes your schedule data. Only those with the link can view your schedule.
+- Your schedule is stored locally in your browser and is not uploaded to any server, except when generating a shareable link.
+- The backend uses secure cryptographic methods to sign and verify tokens.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Contributing
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Contributions are welcome! Please open issues or submit pull requests to help improve Stream Scheduler.
 
-## Deploy on Vercel
+## License
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is licensed under the MIT License.
