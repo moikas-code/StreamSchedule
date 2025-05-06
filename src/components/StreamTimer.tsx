@@ -14,7 +14,6 @@ interface Section {
 // Sortable item component for sections
 interface SortableSectionItemProps {
   id: string;
-  index: number;
   section: Section;
   is_editing: boolean;
   on_edit: () => void;
@@ -31,7 +30,7 @@ interface SortableSectionItemProps {
   is_last: boolean;
 }
 
-function SortableSectionItem({ id, index, section, is_editing, on_edit, on_delete, on_move_up, on_move_down, on_save, on_cancel, edit_name, edit_duration, set_edit_name, set_edit_duration, is_first, is_last }: SortableSectionItemProps) {
+function SortableSectionItem({ id, section, is_editing, on_edit, on_delete, on_move_up, on_move_down, on_save, on_cancel, edit_name, edit_duration, set_edit_name, set_edit_duration, is_first, is_last }: SortableSectionItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -395,7 +394,6 @@ export default function StreamTimer() {
                   <SortableSectionItem
                     key={index}
                     id={index.toString()}
-                    index={index}
                     section={section}
                     is_editing={edit_section_index === index}
                     on_edit={() => start_edit_section(index)}
