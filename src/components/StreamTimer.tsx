@@ -14,6 +14,9 @@ export default function StreamTimer() {
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [newSectionName, setNewSectionName] = useState<string>("");
   const [newSectionDuration, setNewSectionDuration] = useState<string>("");
+  const [edit_section_index, set_edit_section_index] = useState<number | null>(null);
+  const [edit_section_name, set_edit_section_name] = useState<string>("");
+  const [edit_section_duration, set_edit_section_duration] = useState<string>("");
 
   // Load sections from localStorage on mount
   useEffect(() => {
@@ -25,9 +28,7 @@ export default function StreamTimer() {
 
   // Save sections to localStorage whenever they change
   useEffect(() => {
-    if (sections.length > 0) {
-      localStorage.setItem("streamSections", JSON.stringify(sections));
-    }
+    localStorage.setItem("streamSections", JSON.stringify(sections));
   }, [sections]);
 
   // Timer logic
@@ -96,6 +97,43 @@ export default function StreamTimer() {
       .padStart(2, "0")}`;
   };
 
+  // Edit section handlers
+  const start_edit_section = (index: number) => {
+    set_edit_section_index(index);
+    set_edit_section_name(sections[index].name);
+    set_edit_section_duration(sections[index].duration.toString());
+  };
+
+  const save_edit_section = (index: number) => {
+    if (!edit_section_name || !edit_section_duration) return;
+    const updated_sections = sections.map((section, i) =>
+      i === index
+        ? { name: edit_section_name, duration: parseInt(edit_section_duration) }
+        : section
+    );
+    setSections(updated_sections);
+    set_edit_section_index(null);
+    set_edit_section_name("");
+    set_edit_section_duration("");
+  };
+
+  const cancel_edit_section = () => {
+    set_edit_section_index(null);
+    set_edit_section_name("");
+    set_edit_section_duration("");
+  };
+
+  // Move section up/down
+  const move_section = (index: number, direction: 'up' | 'down') => {
+    const new_index = direction === 'up' ? index - 1 : index + 1;
+    if (new_index < 0 || new_index >= sections.length) return;
+    const updated_sections = [...sections];
+    const temp = updated_sections[index];
+    updated_sections[index] = updated_sections[new_index];
+    updated_sections[new_index] = temp;
+    setSections(updated_sections);
+  };
+
   return (
     <div className="p-6 max-w-2xl mx-auto bg-gray-800 text-white rounded-lg shadow-lg">
       {/* Section Management */}
@@ -127,19 +165,70 @@ export default function StreamTimer() {
           {sections.map((section, index) => (
             <li
               key={index}
-              className="flex justify-between bg-gray-700 p-2 rounded"
+              className="flex flex-col sm:flex-row sm:items-center justify-between bg-gray-700 p-2 rounded"
             >
-              <span>
-                {section.name} ({section.duration} min)
-              </span>
-              <button
-                onClick={() =>
-                  setSections(sections.filter((_, i) => i !== index))
-                }
-                className="text-red-400 hover:text-red-500"
-              >
-                Delete
-              </button>
+              {edit_section_index === index ? (
+                <div className="flex flex-col sm:flex-row sm:items-center w-full space-y-2 sm:space-y-0 sm:space-x-2">
+                  <input
+                    type="text"
+                    value={edit_section_name}
+                    onChange={(e) => set_edit_section_name(e.target.value)}
+                    className="p-1 rounded bg-gray-600 text-white flex-1"
+                  />
+                  <input
+                    type="number"
+                    value={edit_section_duration}
+                    onChange={(e) => set_edit_section_duration(e.target.value)}
+                    className="p-1 rounded bg-gray-600 text-white w-20"
+                  />
+                  <button
+                    onClick={() => save_edit_section(index)}
+                    className="p-1 bg-green-600 rounded hover:bg-green-700 text-xs"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={cancel_edit_section}
+                    className="p-1 bg-gray-500 rounded hover:bg-gray-600 text-xs"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col sm:flex-row sm:items-center w-full justify-between">
+                  <span className="flex-1">
+                    {section.name} ({section.duration} min)
+                  </span>
+                  <div className="flex space-x-1 mt-2 sm:mt-0">
+                    <button
+                      onClick={() => start_edit_section(index)}
+                      className="p-1 bg-yellow-600 rounded hover:bg-yellow-700 text-xs"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => setSections(sections.filter((_, i) => i !== index))}
+                      className="p-1 bg-red-600 rounded hover:bg-red-700 text-xs"
+                    >
+                      Delete
+                    </button>
+                    <button
+                      onClick={() => move_section(index, 'up')}
+                      className="p-1 bg-blue-500 rounded hover:bg-blue-600 text-xs"
+                      disabled={index === 0}
+                    >
+                      ↑
+                    </button>
+                    <button
+                      onClick={() => move_section(index, 'down')}
+                      className="p-1 bg-blue-500 rounded hover:bg-blue-600 text-xs"
+                      disabled={index === sections.length - 1}
+                    >
+                      ↓
+                    </button>
+                  </div>
+                </div>
+              )}
             </li>
           ))}
         </ul>
