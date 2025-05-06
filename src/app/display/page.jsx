@@ -1,25 +1,13 @@
 "use client";
-import { Suspense } from "react";
-import { useEffect, useState, useRef, useMemo, useCallback } from "react";
+import { Suspense, useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-import { jwtDecode } from 'jwt-decode';
+import { verify_jwt } from "@/lib/jwt";
 
-// Robustly parse and validate the sections param from JWT
 function parse_sections_from_token(token) {
-  try {
-    const decoded = jwtDecode(token);
-    if (!Array.isArray(decoded)) return [];
-    // Validate each section object
-    return decoded.filter(
-      (section) =>
-        section &&
-        typeof section.name === "string" &&
-        typeof section.duration === "number" &&
-        section.duration > 0
-    );
-  } catch {
-    return [];
-  }
+  const secret = process.env.NEXT_PUBLIC_JWT_SECRET;
+  if (!token || !secret) return [];
+  // verify_jwt is async, so we must handle it in a useEffect
+  return { token, secret };
 }
 
 function DisplayPageContent() {
@@ -30,24 +18,27 @@ function DisplayPageContent() {
   const [time, set_time] = useState(0);
   const timer_ref = useRef(null);
 
-  // Parse and set sections on token param change
   useEffect(() => {
-    if (token_param) {
-      const parsed = parse_sections_from_token(token_param);
-      set_sections(parsed);
-      set_current_index(0);
-      set_time(0);
-    } else {
+    async function decode_token() {
+      if (token_param && process.env.NEXT_PUBLIC_JWT_SECRET) {
+        const payload = await verify_jwt(token_param, process.env.NEXT_PUBLIC_JWT_SECRET);
+        if (payload && Array.isArray(payload.sections)) {
+          set_sections(payload.sections);
+          set_current_index(0);
+          set_time(0);
+          return;
+        }
+      }
       set_sections([]);
       set_current_index(0);
       set_time(0);
     }
+    decode_token();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token_param]);
 
-  // Timer effect: only runs if valid sections and index
   useEffect(() => {
     if (!sections.length || current_index >= sections.length) return;
-    // Clear any previous interval
     if (timer_ref.current) clearInterval(timer_ref.current);
     timer_ref.current = setInterval(() => {
       set_time((prev_time) => {
@@ -67,7 +58,6 @@ function DisplayPageContent() {
     return () => clearInterval(timer_ref.current);
   }, [sections, current_index]);
 
-  // Memoized formatting and derived values
   const format_time = useCallback((seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -90,8 +80,8 @@ function DisplayPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black flex flex-col items-center justify-center p-6">
-      <div className="w-full max-w-2xl bg-gray-800 rounded-2xl shadow-2xl p-8 border-4 border-purple-700">
+    <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-6">
+      <div className="w-full max-w-2xl bg-gray-800/70 rounded-2xl shadow-2xl p-8 border-4 border-purple-700">
         <h1 className="text-4xl font-extrabold text-purple-400 mb-8 text-center tracking-widest drop-shadow-lg">STREAM TIMER</h1>
         <div className="mb-10">
           <div className="text-2xl font-bold text-white mb-2 text-center">Current Section</div>

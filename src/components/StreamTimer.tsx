@@ -4,6 +4,7 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from 
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Dispatch, SetStateAction } from 'react';
+import jwt_encode from "jwt-encode";
 
 // Define a Section type
 interface Section {
@@ -288,12 +289,21 @@ export default function StreamTimer() {
   }, [startTimer, pauseTimer, resetTimer, isRunning, sections, currentSection, time]);
 
   // Generate shareable link
-  const generate_share_link = () => {
+  const generate_share_link = async () => {
     try {
-      const encoded_sections = encodeURIComponent(JSON.stringify(sections));
       const base_url = typeof window !== 'undefined' ? window.location.origin : '';
-      set_share_link(`${base_url}/display?sections=${encoded_sections}`);
-      set_copy_success(false);
+      const response = await fetch("/api/create-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sections }),
+      });
+      const data = await response.json();
+      if (data.token) {
+        set_share_link(`${base_url}/display?token=${data.token}`);
+        set_copy_success(false);
+      } else {
+        set_share_link("");
+      }
     } catch {
       set_share_link("");
     }
