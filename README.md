@@ -1,6 +1,6 @@
-# Stream Scheduler
+# Stream Schedule
 
-Stream Scheduler is a web application for streamers and event hosts to create, manage, and share detailed streaming schedules. Each schedule consists of multiple sections, each with a custom name and duration, and a built-in timer to help you stay on track during your stream or event.
+Stream Schedule is a web application for streamers and event hosts to create, manage, and share detailed streaming schedules. Each schedule consists of multiple sections, each with a custom name and duration, and a built-in timer to help you stay on track during your stream or event.
 
 ## Features
 
@@ -45,7 +45,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to use Str
 
 ## Contributing
 
-Contributions are welcome! Please open issues or submit pull requests to help improve Stream Scheduler.
+Contributions are welcome! Please open issues or submit pull requests to help improve Stream Schedule.
 
 ## License
 
